@@ -20,6 +20,7 @@ import model.Firewall;
 import model.Router;
 import model.Server;
 import model.Switch;
+import service.factory.EquipmentFactory;
 
 public class EquipmentService {
 
@@ -37,38 +38,26 @@ public class EquipmentService {
 		this.equipments = equipments;
 	}
 
-	public Boolean registerEquipment(String type, String model, String ip, String manufacturer,
-			String state, Double energyConsumption, Integer qtdHourConsumption, Boolean supportWifi, Integer mbps,
-			Double portCapacityGB, String opSystem, Integer ramCapacity, Integer diskCapacity,
-			Boolean statefullPacketInspection, Boolean blockDoS) {
+	public Boolean registerEquipment(String type,String model, String ip, String manufacturer, String state, Double energyConsumption,
+	                                 Integer qtdHourConsumption, Boolean supportWifi, Integer mbps, Double portCapacityGB, String opSystem,
+	                                 Integer ramCapacity, Integer diskCapacity, Boolean statefullPacketInspection, Boolean blockDoS) {
 
-		Equipment e = null;
+	    try {
+	         Equipment equipment = EquipmentFactory.create(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption,
+	                                                      supportWifi, mbps, portCapacityGB, opSystem, ramCapacity, diskCapacity,
+	                                                      statefullPacketInspection, blockDoS);
 
-		// === create the specific object ===
-		if (type.equalsIgnoreCase("Router")) {
-			e = new Router(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption, supportWifi,
-					mbps);
-		} else if (type.equalsIgnoreCase("Switch")) {
-			 e = new Switch(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption, portCapacityGB);
-		} else if (type.equalsIgnoreCase("Server")) {
-			 e = new Server(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption, opSystem,
-					ramCapacity, diskCapacity);
-		} else if (type.equalsIgnoreCase("Firewall")) {
-			e = new Firewall(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption,
-					statefullPacketInspection, blockDoS);
-		}
+	         equipments.add(equipment);
+	         return true;
 
-		// === Case the type unknown ===
-		if (e == null) {
-			System.out.println("Unknown equipment type!");
-			return false;
-		}
-
-		// === Add in the list ===
-		equipments.add(e);
-		return true;
-
+	       }
+	       catch (IllegalArgumentException e) 
+	       {
+	          System.out.println(e.getMessage());
+	          return false;
+	       }
 	}
+
 
 	public boolean isValidType(String type) {
 		// check if type is valid
