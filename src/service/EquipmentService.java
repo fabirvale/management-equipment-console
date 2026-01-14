@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import model.Equipment;
+import model.EquipmentState;
+import model.EquipmentType;
 import model.Firewall;
 import model.Router;
 import model.Server;
@@ -41,9 +43,28 @@ public class EquipmentService {
 	public Boolean registerEquipment(String type,String model, String ip, String manufacturer, String state, Double energyConsumption,
 	                                 Integer qtdHourConsumption, Boolean supportWifi, Integer mbps, Double portCapacityGB, String opSystem,
 	                                 Integer ramCapacity, Integer diskCapacity, Boolean statefullPacketInspection, Boolean blockDoS) {
+        
+		EquipmentType typeInput;
+		EquipmentState stateInput;
 
+		try {
+		    typeInput = EquipmentType.fromString(type);
+		   }
+           catch (IllegalArgumentException e) {
+		     System.out.println("Invalid equipment type.");
+		     return false;
+		   }
+		
+		try {
+			stateInput = EquipmentState.fromString(state);
+		   }
+           catch (IllegalArgumentException e) {
+		     System.out.println("Invalid equipment state.");
+		     return false;
+		   }
+		
 	    try {
-	         Equipment equipment = EquipmentFactory.create(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption,
+	         Equipment equipment = EquipmentFactory.create(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
 	                                                      supportWifi, mbps, portCapacityGB, opSystem, ramCapacity, diskCapacity,
 	                                                      statefullPacketInspection, blockDoS);
 
@@ -58,18 +79,7 @@ public class EquipmentService {
 	       }
 	}
 
-
-	public boolean isValidType(String type) {
-		// check if type is valid
-		if (type.equalsIgnoreCase("Router") || type.equalsIgnoreCase("Switch") || type.equalsIgnoreCase("Server")
-				|| type.equalsIgnoreCase("Firewall")) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public boolean isValidModel(String model) {
+    public boolean isValidModel(String model) {
 		return model != null && !model.trim().isEmpty();
 	}
 
@@ -91,10 +101,7 @@ public class EquipmentService {
 		return manufacturer != null && !manufacturer.trim().isEmpty();
 	}
 
-	public boolean isValidState(String state) {
-		return state != null && (state.equalsIgnoreCase("on") || state.equalsIgnoreCase("off"));
-	}
-
+	
 	public boolean isValidEnergy(Double energy) {
 		return energy != null && energy > 0;
 	}
@@ -128,17 +135,18 @@ public class EquipmentService {
 		return null;
 	}
 
-	public void executeOperation(String op, Equipment equipment) {
-		if (op.equalsIgnoreCase("Turn on")) {
-			equipment.setState("on");
-			equipment.powerOn();
+	public void executeOperation(EquipmentState state, Equipment equipment) {
 
-		} else if (op.equalsIgnoreCase("Turn off")) {
-			equipment.setState("off");
-			equipment.powerOff();
-		} else {
-			equipment.restart();
-		}
+	    switch (state) {
+	        case ON -> {
+	            equipment.setState(EquipmentState.ON);
+	            equipment.powerOn();
+	        }
+	        case OFF -> {
+	            equipment.setState(EquipmentState.OFF);
+	            equipment.powerOff();
+	        }
+	    }
 	}
 
 	public void showEnergyReport(Equipment equipment) {
@@ -204,8 +212,10 @@ public class EquipmentService {
 
 	public void createEquipmentFromLine(String[] vetEquipment, Integer line) {
 		Integer qtdHourConsumption, mbps, ramCapacity, diskCapacity;
-		String type, model, ip, manufacturer, state, opSystem;
+		String model, ip, manufacturer, opSystem;
 		Double energyConsumption, portCapacityGB;
+		EquipmentType type;
+		EquipmentState state;
 		Boolean supportWifi, statefullPacketInspection, blockDoS;
 		
 		Equipment eq = null;
@@ -219,12 +229,15 @@ public class EquipmentService {
 		}
 
 		// validate Type
-		if (isValidType(vetEquipment[0])) {
-			type = vetEquipment[0];
-		} else {
-			log.saveLog("Line " + line + " ignored : invalid Type.");
-			return;
+		
+		try {
+		    type = EquipmentType.fromString(vetEquipment[0]);
+		} 
+		catch (IllegalArgumentException e) {
+		    log.saveLog("Line " + line + " ignored: invalid equipment type.");
+		    return;
 		}
+		
 		// validate Model
 		if (isValidModel(vetEquipment[1])) {
 			model = vetEquipment[1];
@@ -255,10 +268,13 @@ public class EquipmentService {
 		}
 
 		// validate State
-		if (isValidState(vetEquipment[4])) {
-			state = vetEquipment[4];
-		} else {
-			log.saveLog("Line " + line + " ignored : invalid State.");
+		
+
+		try {
+		    state = EquipmentState.fromString(vetEquipment[4]);
+		} 
+		catch (IllegalArgumentException e) {
+		    log.saveLog("Line " + line + " ignored: invalid equipment state.");
 		    return;
 		}
 
@@ -291,7 +307,7 @@ public class EquipmentService {
 		    return;
 		}
 
-		if (type.equalsIgnoreCase("Router")) {
+		if (type == EquipmentType.ROUTER) {
 		    if (vetEquipment.length < 9) {
 		        log.saveLog("Line " + line + " ignored: missing fields for Router.");
 			    return;
@@ -322,7 +338,7 @@ public class EquipmentService {
 		    equipments.add(eq);
 		}
   
-		else if (type.equalsIgnoreCase("Switch")) {
+		else if (type == EquipmentType.SWITCH) {
 			if (vetEquipment.length < 8) {
 				log.saveLog("Line " + line + " ignored: missing fields for Switch.");
 				return;
@@ -344,7 +360,7 @@ public class EquipmentService {
 			equipments.add(eq);
 		}
 
-		else if (type.equalsIgnoreCase("Server")) {
+		else if (type == EquipmentType.SERVER) {
 
 			if (vetEquipment.length < 10) {
 				log.saveLog("Line " + line + " ignored: missing fields for Server.");
@@ -417,7 +433,7 @@ public class EquipmentService {
 	    try (BufferedWriter bw = new BufferedWriter(new FileWriter("C:\\temp\\out\\equipments.csv", false))) {
 
 	        for (Equipment e : equipments) {
-	            String line = e.getType() + ";" +
+	            String line = e.getType().name() + ";" +
 	                    e.getModel() + ";" +
 	                    e.getIp() + ";" +
 	                    e.getManufacturer() + ";" +
@@ -454,23 +470,25 @@ public class EquipmentService {
 	    }
 	}
 	
-	public Map<String, Long> generateEqCount() {
-	    return equipments.stream().collect(Collectors.groupingBy(
-	    	    e -> e.getType().trim().toLowerCase(), //grouping by type
-	    	    Collectors.counting())); //counting the equipment by type
+	public Map<EquipmentType, Long> generateEqCount() {
+	    return equipments.stream()
+	            .collect(Collectors.groupingBy(
+	                    Equipment::getType,
+	                    Collectors.counting()));
 	}
 	
-	public Map<String, Double> generateAverageConsumption() {
+	public Map<EquipmentType, Double> generateAverageConsumption() {
 	    return equipments.stream()
 	        .collect(Collectors.groupingBy(
-	            e -> e.getType().trim().toLowerCase(),    // grouping by type
+	        		Equipment::getType,    // grouping by type
 	            Collectors.averagingDouble(Equipment::getEnergyConsumption) // calculate average
 	        ));
 	}
 	
-	public Map<String, Long> generateEqState() {
+	
+	public Map<EquipmentState, Long> generateEqState() {
 	    return equipments.stream().collect(Collectors.groupingBy(
-	    	    e -> e.getState().trim().toLowerCase(), //grouping by state
+	    		Equipment::getState, //grouping by state
 	    	    Collectors.counting())); //counting the equipment by state
 	}
 	

@@ -5,7 +5,7 @@ public class Server extends Equipment{
 	private int ramCapacity;
 	private int diskCapacity;
 	
-	public Server(String type, String model, String ip, String manufacturer, String state, Double energyConsumption,
+	public Server(EquipmentType type, String model, String ip, String manufacturer, EquipmentState state, Double energyConsumption,
 			Integer qtdHourConsumption, String opSystem, int ramCapacity, int diskCapacity) {
 		super(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption);
 		this.opSystem = opSystem;

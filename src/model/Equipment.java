@@ -1,15 +1,15 @@
 package model;
 
 public abstract class Equipment {
-	private String type;
+	private EquipmentType type;
 	private String model;
 	private String ip;
 	private String manufacturer;
-    private String state;
+    private EquipmentState state;
     private Double energyConsumption;
     private Integer qtdHourConsumption;
     
-	public Equipment(String type, String model, String ip, String manufacturer, String state, Double energyConsumption, Integer qtdHourConsumption) {
+	public Equipment(EquipmentType type, String model, String ip, String manufacturer, EquipmentState state, Double energyConsumption, Integer qtdHourConsumption) {
 		this.type = type;
 		this.model = model;
 		this.ip = ip;
@@ -18,10 +18,10 @@ public abstract class Equipment {
 		this.energyConsumption = energyConsumption;
 		this.qtdHourConsumption = qtdHourConsumption;
 	}
-	public String getType() {
+	public EquipmentType getType() {
 		return type;
 	}
-	public void setType(String type) {
+	public void setType(EquipmentType type) {
 		this.type = type;
 	}
 	public String getModel() {
@@ -42,10 +42,10 @@ public abstract class Equipment {
 	public void setManufacturer(String manufacturer) {
 		this.manufacturer = manufacturer;
 	}
-	public String getState() {
+	public EquipmentState getState() {
 		return state;
 	}
-	public void setState(String state) {
+	public void setState(EquipmentState state) {
 		this.state = state;
 	}
 	public Double getEnergyConsumption() {

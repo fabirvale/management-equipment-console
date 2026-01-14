@@ -3,7 +3,7 @@ package model;
 public class Switch extends Equipment {
 	private Double portCapacityGB;
 
-	public Switch(String type, String model, String ip, String manufacturer, String state, Double energyConsumption,
+	public Switch(EquipmentType type, String model, String ip, String manufacturer, EquipmentState state, Double energyConsumption,
 			Integer qtdHourConsumption, Double portCapacityGB) {
 		super(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption);
 		this.portCapacityGB = portCapacityGB;

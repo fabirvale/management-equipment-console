@@ -4,7 +4,7 @@ public class Router extends Equipment {
 	private Boolean supportWifi;
 	private Integer Mbps;
 
-	public Router(String type, String model, String ip, String manufacturer, String state, Double energyConsumption,
+	public Router(EquipmentType type, String model, String ip, String manufacturer, EquipmentState state, Double energyConsumption,
 			Integer qtdHourConsumption, Boolean suportWifi, Integer mbps) {
 		super(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption);
 		this.supportWifi = suportWifi;

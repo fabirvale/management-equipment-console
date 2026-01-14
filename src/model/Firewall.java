@@ -4,7 +4,7 @@ public class Firewall extends Equipment {
 	private boolean statefullPacketInspection;//indicates whether the firewall performs stateful packet inspection (SPI)
 	private boolean blockDoS; //indicates whether the firewall has protection against DoS (Denial of Service) attacks
 	
-	public Firewall(String type, String model, String ip, String manufacturer, String state, Double energyConsumption,
+	public Firewall(EquipmentType type, String model, String ip, String manufacturer, EquipmentState state, Double energyConsumption,
 			Integer qtdHourConsumption, boolean statefullPacketInspection, boolean blockDoS) {
 		super(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption);
 		this.statefullPacketInspection = statefullPacketInspection;
