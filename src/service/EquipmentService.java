@@ -22,7 +22,6 @@ import model.Firewall;
 import model.Router;
 import model.Server;
 import model.Switch;
-import service.factory.EquipmentFactory;
 
 public class EquipmentService {
 
@@ -39,49 +38,103 @@ public class EquipmentService {
 	public void setEquipments(List<Equipment> equipments) {
 		this.equipments = equipments;
 	}
+    
+	public Boolean registerEquipment(String type, String model, String ip, String manufacturer, String state,
+	        Double energyConsumption, Integer qtdHourConsumption, Boolean supportWifi, Integer mbps,
+	        Double portCapacityGB, String opSystem, Integer ramCapacity, Integer diskCapacity,
+	        Boolean statefullPacketInspection, Boolean blockDoS) {
 
-	public Boolean registerEquipment(String type,String model, String ip, String manufacturer, String state, Double energyConsumption,
-	                                 Integer qtdHourConsumption, Boolean supportWifi, Integer mbps, Double portCapacityGB, String opSystem,
-	                                 Integer ramCapacity, Integer diskCapacity, Boolean statefullPacketInspection, Boolean blockDoS) {
-        
-		EquipmentType typeInput;
-		EquipmentState stateInput;
+	    EquipmentType typeInput;
+	    EquipmentState stateInput;
+	    
+	    /* basics validations
+	    if (!isRequiredFieldValid(type) || !isRequiredFieldValid(model) || !isRequiredFieldValid(ip)
+	            || !isRequiredFieldValid(manufacturer) || !isRequiredFieldValid(state)) {
+	        System.out.println("Error: Required fields are missing.");
+	        return false;
+	    }*/
 
-		try {
-		    typeInput = EquipmentType.fromString(type);
-		   }
-           catch (IllegalArgumentException e) {
-		     System.out.println("Invalid equipment type.");
-		     return false;
-		   }
-		
-		try {
-			stateInput = EquipmentState.fromString(state);
-		   }
-           catch (IllegalArgumentException e) {
-		     System.out.println("Invalid equipment state.");
-		     return false;
-		   }
-		
 	    try {
-	         Equipment equipment = EquipmentFactory.create(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
-	                                                      supportWifi, mbps, portCapacityGB, opSystem, ramCapacity, diskCapacity,
-	                                                      statefullPacketInspection, blockDoS);
+	        typeInput = EquipmentType.fromString(type);
+	    } catch (IllegalArgumentException e) {
+	        System.out.println("Invalid equipment type.");
+	        return false;
+	    }
 
-	         equipments.add(equipment);
-	         return true;
+	    try {
+	        stateInput = EquipmentState.fromString(state);
+	    } catch (IllegalArgumentException e) {
+	        System.out.println("Invalid equipment state.");
+	        return false;
+	    }
 
-	       }
-	       catch (IllegalArgumentException e) 
-	       {
-	          System.out.println(e.getMessage());
-	          return false;
-	       }
+	 
+	  //  if (!validarIP(ip)) {
+	      //  System.out.println("Error: Invalid IP format.");
+	     //   return false;
+	  //  }
+
+	  //  if (isDuplicateIp(ip)) {
+	    //    System.out.println("Error: IP already registered.");
+	      //  return false;
+	   // }
+
+	    if (!isValidEnergy(energyConsumption) || !isValidConsumptionHours(qtdHourConsumption)) {
+	        System.out.println("Error: Invalid numeric values.");
+	        return false;
+	    }
+
+	    // specific fields for validations
+	    if (typeInput == EquipmentType.ROUTER && (supportWifi == null || !isValidInteger(mbps))) {
+	        System.out.println("Error: Invalid Router specific fields.");
+	        return false;
+	    } else if (typeInput == EquipmentType.SWITCH && !isValidDouble(portCapacityGB)) {
+	        System.out.println("Error: Invalid Switch specific fields.");
+	        return false;
+	    } else if (typeInput == EquipmentType.SERVER
+	            && (!isRequiredFieldValid(opSystem) || !isValidInteger(ramCapacity) || !isValidInteger(diskCapacity))) {
+	        System.out.println("Error: Invalid Server specific fields.");
+	        return false;
+	    } else if (typeInput == EquipmentType.FIREWALL && (statefullPacketInspection == null || blockDoS == null)) {
+	        System.out.println("Error: Invalid Firewall specific fields.");
+	        return false;
+	    }
+
+	    // Create the equipment
+	    Equipment e = null;
+	    switch (typeInput) {
+	        case ROUTER:
+	            e = new Router(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
+	                    supportWifi, mbps);
+	            break;
+	        case SWITCH:
+	            e = new Switch(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
+	                    portCapacityGB);
+	            break;
+	        case SERVER:
+	            e = new Server(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
+	                    opSystem, ramCapacity, diskCapacity);
+	            break;
+	        case FIREWALL:
+	            e = new Firewall(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
+	                    statefullPacketInspection, blockDoS);
+	            break;
+	    }
+
+	    // Add in the list
+	    equipments.add(e);
+	    System.out.println("Equipment registered successfully!");
+	    return true;
+	}
+	
+
+
+	// validate value != empty
+	public boolean isRequiredFieldValid(String value) {
+		return value != null && !value.trim().isEmpty();
 	}
 
-    public boolean isValidModel(String model) {
-		return model != null && !model.trim().isEmpty();
-	}
+	// validate the IP
 
 	public boolean validarIP(String ip) {
 		String regex = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}" + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
@@ -96,11 +149,6 @@ public class EquipmentService {
 		}
 		return false; // there is no IP in list
 	}
-
-	public boolean isValidManufacturer(String manufacturer) {
-		return manufacturer != null && !manufacturer.trim().isEmpty();
-	}
-
 	
 	public boolean isValidEnergy(Double energy) {
 		return energy != null && energy > 0;
@@ -109,11 +157,7 @@ public class EquipmentService {
 	public boolean isValidConsumptionHours(int hours) {
 		return hours > 0 && hours <= 24;
 	}
-
-	public boolean isValidosSystem(String osSystem) {
-		return osSystem != null && !osSystem.trim().isEmpty();
-	}
-
+ 
 	public boolean isValidInteger(Integer value) {
 		return value != null && value > 0;
 	}
@@ -137,17 +181,17 @@ public class EquipmentService {
 
 	public void executeOperation(EquipmentState state, Equipment equipment) {
 
-	    switch (state) {
-	        case ON -> {
-	            equipment.setState(EquipmentState.ON);
-	            equipment.powerOn();
-	        }
-	        case OFF -> {
-	            equipment.setState(EquipmentState.OFF);
-	            equipment.powerOff();
-	        }
-	    }
+		switch (state) {
+		case ON -> {
+			equipment.setState(EquipmentState.ON);
+			equipment.powerOn();
+		}
+		case OFF -> {
+			equipment.setState(EquipmentState.OFF);
+			equipment.powerOff();
+		}
 	}
+  }
 
 	public void showEnergyReport(Equipment equipment) {
 		System.out.println();
@@ -159,8 +203,8 @@ public class EquipmentService {
 
 	public void showStateReport(Equipment equipment) {
 		System.out.println();
-		System.out.println(" Model: " + equipment.getModel()  + "\n Manufacturer: "
-				+ equipment.getManufacturer() + "\n State: " + equipment.getState());
+		System.out.println(" Model: " + equipment.getModel() + "\n Manufacturer: " + equipment.getManufacturer()
+				+ "\n State: " + equipment.getState());
 		System.out.println("=======================================================================================");
 		System.out.println();
 	}
@@ -174,17 +218,17 @@ public class EquipmentService {
 	}
 
 	public void loadFromFile() {
-		
-		//making a backup of the original file before uploading
+
+		// making a backup of the original file before uploading
 		Path origem = Paths.get("C:\\temp\\out\\equipments.csv");
 		Path destino = Paths.get("C:\\temp\\out\\equipments_backup.csv");
-        try {
-			  if (Files.exists(origem)) {
-			    Files.copy(origem, destino, StandardCopyOption.REPLACE_EXISTING);
-			  }
-        } catch (IOException e) {
-            System.out.println("Error copying file: " + e.getMessage());
-        }
+		try {
+			if (Files.exists(origem)) {
+				Files.copy(origem, destino, StandardCopyOption.REPLACE_EXISTING);
+			}
+		} catch (IOException e) {
+			System.out.println("Error copying file: " + e.getMessage());
+		}
 
 		try (BufferedReader br = new BufferedReader(new FileReader(origem.toString()))) {
 
@@ -201,7 +245,7 @@ public class EquipmentService {
 				line = br.readLine();
 
 			}
-			
+
 			System.out.println(i + " lines were loaded.");
 			System.out.println();
 
@@ -217,7 +261,7 @@ public class EquipmentService {
 		EquipmentType type;
 		EquipmentState state;
 		Boolean supportWifi, statefullPacketInspection, blockDoS;
-		
+
 		Equipment eq = null;
 		LogService log = new LogService();
 
@@ -229,17 +273,16 @@ public class EquipmentService {
 		}
 
 		// validate Type
-		
+
 		try {
-		    type = EquipmentType.fromString(vetEquipment[0]);
-		} 
-		catch (IllegalArgumentException e) {
-		    log.saveLog("Line " + line + " ignored: invalid equipment type.");
-		    return;
+			type = EquipmentType.fromString(vetEquipment[0]);
+		} catch (IllegalArgumentException e) {
+			log.saveLog("Line " + line + " ignored: invalid equipment type.");
+			return;
 		}
-		
+
 		// validate Model
-		if (isValidModel(vetEquipment[1])) {
+		if (isRequiredFieldValid(vetEquipment[1])) {
 			model = vetEquipment[1];
 		} else {
 			log.saveLog("Line " + line + " ignored : invalid Model.");
@@ -255,27 +298,24 @@ public class EquipmentService {
 				return;
 			}
 		} else {
-				log.saveLog("Line " + line + " ignored : Invalid IP format.");
-			    return;
+			log.saveLog("Line " + line + " ignored : Invalid IP format.");
+			return;
 		}
 
 		// validate manufacturer
-		if (isValidManufacturer(vetEquipment[3])) {
+		if (isRequiredFieldValid(vetEquipment[3])) {
 			manufacturer = vetEquipment[3];
 		} else {
-			   log.saveLog("Line " + line + " ignored : invalid Manufacturer.");
-		       return;
+			log.saveLog("Line " + line + " ignored : invalid Manufacturer.");
+			return;
 		}
 
 		// validate State
-		
-
 		try {
-		    state = EquipmentState.fromString(vetEquipment[4]);
-		} 
-		catch (IllegalArgumentException e) {
-		    log.saveLog("Line " + line + " ignored: invalid equipment state.");
-		    return;
+			state = EquipmentState.fromString(vetEquipment[4]);
+		} catch (IllegalArgumentException e) {
+			log.saveLog("Line " + line + " ignored: invalid equipment state.");
+			return;
 		}
 
 		// validate energyConsumption
@@ -286,11 +326,11 @@ public class EquipmentService {
 				energyConsumption = energyValue;
 			} else {
 				log.saveLog("Line " + line + " ignored : invalid energy consumption.");
-			    return;
+				return;
 			}
 		} catch (NumberFormatException e) {
 			log.saveLog("Line " + line + " ignored : invalid energy value.");
-		    return;
+			return;
 		}
 
 		// validate qtdHourConsumption
@@ -300,61 +340,62 @@ public class EquipmentService {
 				qtdHourConsumption = qtd;
 			} else {
 				log.saveLog("Line " + line + " ignored : Invalid the number of hours of use.");
-			    return;
+				return;
 			}
 		} catch (NumberFormatException e) {
 			log.saveLog("Line " + line + " ignored : invalid number of hours of use value.");
-		    return;
+			return;
 		}
 
 		if (type == EquipmentType.ROUTER) {
-		    if (vetEquipment.length < 9) {
-		        log.saveLog("Line " + line + " ignored: missing fields for Router.");
-			    return;
-		    }
-
-		    // === Validate supportWifi ===
-		    String answer = vetEquipment[7].trim().toLowerCase();
-		    if (!answer.equals("true") && !answer.equals("false")) {
-		       	log.saveLog("Line " + line + " ignored: Invalid boolean value");
+			if (vetEquipment.length < 9) {
+				log.saveLog("Line " + line + " ignored: missing fields for Router.");
 				return;
-		    }
-		    supportWifi = Boolean.parseBoolean(answer);
-		    
-		    // === Validate Mbps ===
-		    try {
-		        mbps = Integer.parseInt(vetEquipment[8]);
-		        if (!isValidInteger(mbps)) {
-		            log.saveLog("Line " + line + " ignored: Mbps velocity must be positive.");
+			}
+
+			// === Validate supportWifi ===
+			String answer = vetEquipment[7].trim().toLowerCase();
+			if (!answer.equals("true") && !answer.equals("false")) {
+				log.saveLog("Line " + line + " ignored: Invalid boolean value");
+				return;
+			}
+			supportWifi = Boolean.parseBoolean(answer);
+
+			// === Validate Mbps ===
+			try {
+				mbps = Integer.parseInt(vetEquipment[8]);
+				if (!isValidInteger(mbps)) {
+					log.saveLog("Line " + line + " ignored: Mbps velocity must be positive.");
 					return;
-		        }
-		    } catch (NumberFormatException e) {
-		        log.saveLog("Line " + line + " ignored: invalid Mbps velocity value.");
+				}
+			} catch (NumberFormatException e) {
+				log.saveLog("Line " + line + " ignored: invalid Mbps velocity value.");
 				return;
-		    }
+			}
 
-		    // === Create and add Router ===
-		    eq = new Router(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption, supportWifi, mbps);
-		    equipments.add(eq);
+			// === Create and add Router ===
+			eq = new Router(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption, supportWifi,
+					mbps);
+			equipments.add(eq);
 		}
-  
+
 		else if (type == EquipmentType.SWITCH) {
 			if (vetEquipment.length < 8) {
 				log.saveLog("Line " + line + " ignored: missing fields for Switch.");
 				return;
 			}
-			//validate portCapacityGB
+			// validate portCapacityGB
 			portCapacityGB = Double.parseDouble(vetEquipment[7]);
-			 try {
-	                if (!isValidDouble(portCapacityGB)) {
-	                	log.saveLog("Line " + line + " ignored: portCapacityGB must be positive.");
-						return;
-	                }   
-	            } catch (NumberFormatException e) {
-	            	log.saveLog("Line " + line + " ignored: portCapacityGB value.");
+			try {
+				if (!isValidDouble(portCapacityGB)) {
+					log.saveLog("Line " + line + " ignored: portCapacityGB must be positive.");
 					return;
-	            }
-			
+				}
+			} catch (NumberFormatException e) {
+				log.saveLog("Line " + line + " ignored: portCapacityGB value.");
+				return;
+			}
+
 			eq = new Switch(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption,
 					portCapacityGB);
 			equipments.add(eq);
@@ -366,37 +407,37 @@ public class EquipmentService {
 				log.saveLog("Line " + line + " ignored: missing fields for Server.");
 				return;
 			}
-			
-			 //validate opSystem
-		    if (isValidosSystem(vetEquipment[7])) {
-		        opSystem = vetEquipment[7];
-		    } else {
-		        log.saveLog("Line " + line + " ignored : Invalid Operating System.");
-				return;
-		    }
 
-			//validate ramCapacity
+			// validate opSystem
+			if (isRequiredFieldValid(vetEquipment[7])) {
+				opSystem = vetEquipment[7];
+			} else {
+				log.saveLog("Line " + line + " ignored : Invalid Operating System.");
+				return;
+			}
+
+			// validate ramCapacity
 			ramCapacity = Integer.parseInt(vetEquipment[8]);
-			 try {
-	                if (!isValidInteger(ramCapacity)) {
-	                	log.saveLog("Line " + line + " ignored: ramCapacity must be positive.");
-						return;
-	                }   
-	            } catch (NumberFormatException e) {
-	            	log.saveLog("Line " + line + " ignored: ramCapacity value.");
+			try {
+				if (!isValidInteger(ramCapacity)) {
+					log.saveLog("Line " + line + " ignored: ramCapacity must be positive.");
 					return;
-	            }
-			 //validate diskCapacity
+				}
+			} catch (NumberFormatException e) {
+				log.saveLog("Line " + line + " ignored: ramCapacity value.");
+				return;
+			}
+			// validate diskCapacity
 			diskCapacity = Integer.parseInt(vetEquipment[9]);
 			try {
-	                if (!isValidInteger(diskCapacity)) {
-	                	System.out.println("Line " + line + " ignored: diskCapacity must be positive.");
-		                return;
-	                }   
-	            } catch (NumberFormatException e) {
-	            	log.saveLog("Line " + line + " ignored: diskCapacity value.");
+				if (!isValidInteger(diskCapacity)) {
+					System.out.println("Line " + line + " ignored: diskCapacity must be positive.");
 					return;
-	            }
+				}
+			} catch (NumberFormatException e) {
+				log.saveLog("Line " + line + " ignored: diskCapacity value.");
+				return;
+			}
 			eq = new Server(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption, opSystem,
 					ramCapacity, diskCapacity);
 			equipments.add(eq);
@@ -407,97 +448,79 @@ public class EquipmentService {
 				log.saveLog("Line " + line + " ignored: missing fields for Firewall.");
 				return;
 			}
-			//validate statefullPacketInspection
+			// validate statefullPacketInspection
 			String answer = vetEquipment[7].trim().toLowerCase();
 			if (!answer.equals("true") && !answer.equals("false")) {
-			        log.saveLog("Line " + line + " ignored: Invalid boolean value.");
-					return;
-			    }
-			  statefullPacketInspection = Boolean.parseBoolean(answer);
-			    
-			//validate blockDoS  
+				log.saveLog("Line " + line + " ignored: Invalid boolean value.");
+				return;
+			}
+			statefullPacketInspection = Boolean.parseBoolean(answer);
+
+			// validate blockDoS
 			answer = vetEquipment[8].trim().toLowerCase();
 			if (!answer.equals("true") && !answer.equals("false")) {
-		        log.saveLog("Line " + line + " ignored: Invalid boolean value.");
+				log.saveLog("Line " + line + " ignored: Invalid boolean value.");
 				return;
-		    }
+			}
 			blockDoS = Boolean.parseBoolean(answer);
-		    
+
 			eq = new Firewall(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption,
 					statefullPacketInspection, blockDoS);
 			equipments.add(eq);
 		}
 	}
-	
+
 	public void saveToFile() {
-	    try (BufferedWriter bw = new BufferedWriter(new FileWriter("C:\\temp\\out\\equipments.csv", false))) {
+		try (BufferedWriter bw = new BufferedWriter(new FileWriter("C:\\temp\\out\\equipments.csv", false))) {
 
-	        for (Equipment e : equipments) {
-	            String line = e.getType().name() + ";" +
-	                    e.getModel() + ";" +
-	                    e.getIp() + ";" +
-	                    e.getManufacturer() + ";" +
-	                    e.getState() + ";" +
-	                    e.getEnergyConsumption() + ";" +
-	                    e.getQtdHourConsumption();
+			for (Equipment e : equipments) {
+				String line = e.getType().name() + ";" + e.getModel() + ";" + e.getIp() + ";" + e.getManufacturer()
+						+ ";" + e.getState() + ";" + e.getEnergyConsumption() + ";" + e.getQtdHourConsumption();
 
-	            // specific fields by type
-	            if (e instanceof Router) {
-	                Router r = (Router) e;
-	                line += ";" + r.getSuportWifi() + ";" + r.getMbps();
-	            } 
-	            else if (e instanceof Switch) {
-	                Switch s = (Switch) e;
-	                line += ";" + s.getPortCapacityGB();
-	            } 
-	            else if (e instanceof Server) {
-	                Server s = (Server) e;
-	                line += ";" + s.getOpSystem() + ";" + s.getRamCapacity() + ";" + s.getDiskCapacity();
-	            } 
-	            else if (e instanceof Firewall) {
-	                Firewall f = (Firewall) e;
-	                line += ";" + f.isStatefullPacketInspection() + ";" + f.isBlockDoS();
-	            }
+				// specific fields by type
+				if (e instanceof Router) {
+					Router r = (Router) e;
+					line += ";" + r.getSuportWifi() + ";" + r.getMbps();
+				} else if (e instanceof Switch) {
+					Switch s = (Switch) e;
+					line += ";" + s.getPortCapacityGB();
+				} else if (e instanceof Server) {
+					Server s = (Server) e;
+					line += ";" + s.getOpSystem() + ";" + s.getRamCapacity() + ";" + s.getDiskCapacity();
+				} else if (e instanceof Firewall) {
+					Firewall f = (Firewall) e;
+					line += ";" + f.isStatefullPacketInspection() + ";" + f.isBlockDoS();
+				}
 
-	            bw.write(line);
-	            bw.newLine();
-	        }
+				bw.write(line);
+				bw.newLine();
+			}
 
-	        System.out.println("Equipments successfully saved to file.");
+			System.out.println("Equipments successfully saved to file.");
 
-	    } catch (IOException e) {
-	        System.out.println("Error: " + e.getMessage());
-	    }
+		} catch (IOException e) {
+			System.out.println("Error: " + e.getMessage());
+		}
 	}
-	
+
 	public Map<EquipmentType, Long> generateEqCount() {
-	    return equipments.stream()
-	            .collect(Collectors.groupingBy(
-	                    Equipment::getType,
-	                    Collectors.counting()));
-	}
-	
-	public Map<EquipmentType, Double> generateAverageConsumption() {
-	    return equipments.stream()
-	        .collect(Collectors.groupingBy(
-	        		Equipment::getType,    // grouping by type
-	            Collectors.averagingDouble(Equipment::getEnergyConsumption) // calculate average
-	        ));
-	}
-	
-	
-	public Map<EquipmentState, Long> generateEqState() {
-	    return equipments.stream().collect(Collectors.groupingBy(
-	    		Equipment::getState, //grouping by state
-	    	    Collectors.counting())); //counting the equipment by state
-	}
-	
-	public List<Equipment> getTop3Consumo() {
-	    return equipments.stream()
-	        .sorted(Comparator.comparingDouble(Equipment::getEnergyConsumption).reversed())
-	        .limit(3)
-	        .collect(Collectors.toList());
+		return equipments.stream().collect(Collectors.groupingBy(Equipment::getType, Collectors.counting()));
 	}
 
+	public Map<EquipmentType, Double> generateAverageConsumption() {
+		return equipments.stream().collect(Collectors.groupingBy(Equipment::getType, // grouping by type
+				Collectors.averagingDouble(Equipment::getEnergyConsumption) // calculate average
+		));
+	}
+
+	public Map<EquipmentState, Long> generateEqState() {
+		return equipments.stream().collect(Collectors.groupingBy(Equipment::getState, // grouping by state
+				Collectors.counting())); // counting the equipment by state
+	}
+
+	public List<Equipment> getTop3Consumo() {
+		return equipments.stream().sorted(Comparator.comparingDouble(Equipment::getEnergyConsumption).reversed())
+				.limit(3).collect(Collectors.toList());
+	}
 
 }
