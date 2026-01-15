@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import model.Equipment;
+import model.EquipmentOperation;
 import service.EquipmentService;
 
 public class ManagementEquipmentApp {
@@ -13,6 +14,7 @@ public class ManagementEquipmentApp {
 
 	public void start() {
 		int option;
+		EquipmentOperation op = null;
 
 		do {
 			showMenu();
@@ -22,9 +24,56 @@ public class ManagementEquipmentApp {
 			switch (option) {
 			case 1 -> createEquipment(sc);
 			case 2 -> printListEquipments(equipmentService.getEquipments());
+			case 3 ->
+			{
+			    if (equipmentService.getEquipments().isEmpty()) {
+			        System.out.println("No equipment registered yet.");
+			        return;
+			    }
+
+				    
+			    // === Operation ===
+			    while (true) {
+			        System.out.print("Operation (turn on/turn off/restart): ");
+			        String operation = sc.nextLine();
+
+			        try {
+			            op = EquipmentOperation.fromString(operation);
+			            break; // invalid operation
+			        } catch (IllegalArgumentException e) {
+			            System.out.println("Invalid operation. Use: turn on, turn off or restart.");
+			        }
+			    }
+
+			    // === IP ===
+			    Equipment equipment = null;
+			    
+			    while (true) {
+			        System.out.print("Inform the IP: ");
+			        String ip = sc.nextLine();
+
+			        if (!equipmentService.validarIP(ip)) {
+			            System.out.println("Invalid IP format! Try again.");
+			            continue;
+			        }
+
+			        equipment = equipmentService.ipSearch(ip);
+
+			        if (equipment == null) {
+			            System.out.println("No equipment found with this IP.");
+			            continue;
+			        }
+
+			        break; //Valid IP and equipment found
+			    }
+
+			    // === Execute ===
+			    equipmentService.executeOperation(op, equipment);
+			}
+
 			case 0 -> System.out.println("Application finished.");
 			default -> System.out.println("Invalid option.");
-			}
+		  }
 
 		} while (option != 0);
 
@@ -217,6 +266,7 @@ public class ManagementEquipmentApp {
 		System.out.println("==============================");
 		System.out.println("1 - Register equipment");
 		System.out.println("2 - List equipments");
+		System.out.println("3 - Turn On / Turn Off / Restart Equipment");
 		System.out.println("0 - Exit");
 		System.out.print("Choose an option: ");
 	}

@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import model.Equipment;
+import model.EquipmentOperation;
 import model.EquipmentState;
 import model.EquipmentType;
 import model.Firewall;
@@ -39,6 +40,8 @@ public class EquipmentService {
 		this.equipments = equipments;
 	}
     
+	
+	//Register Equipment and add in the list
 	public Boolean registerEquipment(String type, String model, String ip, String manufacturer, String state,
 	        Double energyConsumption, Integer qtdHourConsumption, Boolean supportWifi, Integer mbps,
 	        Double portCapacityGB, String opSystem, Integer ramCapacity, Integer diskCapacity,
@@ -46,58 +49,33 @@ public class EquipmentService {
 
 	    EquipmentType typeInput;
 	    EquipmentState stateInput;
-	    
-	    /* basics validations
-	    if (!isRequiredFieldValid(type) || !isRequiredFieldValid(model) || !isRequiredFieldValid(ip)
-	            || !isRequiredFieldValid(manufacturer) || !isRequiredFieldValid(state)) {
-	        System.out.println("Error: Required fields are missing.");
-	        return false;
-	    }*/
-
+	  
 	    try {
 	        typeInput = EquipmentType.fromString(type);
-	    } catch (IllegalArgumentException e) {
-	        System.out.println("Invalid equipment type.");
-	        return false;
-	    }
-
-	    try {
 	        stateInput = EquipmentState.fromString(state);
 	    } catch (IllegalArgumentException e) {
-	        System.out.println("Invalid equipment state.");
+	         return false;
+	    }
+	    
+	    // Safety validations (non-interactive)
+	    if (!validarIP(ip) || isDuplicateIp(ip)) {
 	        return false;
 	    }
-
-	 
-	  //  if (!validarIP(ip)) {
-	      //  System.out.println("Error: Invalid IP format.");
-	     //   return false;
-	  //  }
-
-	  //  if (isDuplicateIp(ip)) {
-	    //    System.out.println("Error: IP already registered.");
-	      //  return false;
-	   // }
 
 	    if (!isValidEnergy(energyConsumption) || !isValidConsumptionHours(qtdHourConsumption)) {
-	        System.out.println("Error: Invalid numeric values.");
 	        return false;
 	    }
-
+  
 	    // specific fields for validations
 	    if (typeInput == EquipmentType.ROUTER && (supportWifi == null || !isValidInteger(mbps))) {
-	        System.out.println("Error: Invalid Router specific fields.");
-	        return false;
+	         return false;
 	    } else if (typeInput == EquipmentType.SWITCH && !isValidDouble(portCapacityGB)) {
-	        System.out.println("Error: Invalid Switch specific fields.");
-	        return false;
+	         return false;
 	    } else if (typeInput == EquipmentType.SERVER
 	            && (!isRequiredFieldValid(opSystem) || !isValidInteger(ramCapacity) || !isValidInteger(diskCapacity))) {
-	        System.out.println("Error: Invalid Server specific fields.");
-	        return false;
+	         return false;
 	    } else if (typeInput == EquipmentType.FIREWALL && (statefullPacketInspection == null || blockDoS == null)) {
-	        System.out.println("Error: Invalid Firewall specific fields.");
-	        return false;
+	         return false;
 	    }
 
 	    // Create the equipment
@@ -123,7 +101,6 @@ public class EquipmentService {
 
 	    // Add in the list
 	    equipments.add(e);
-	    System.out.println("Equipment registered successfully!");
 	    return true;
 	}
 	
@@ -179,18 +156,40 @@ public class EquipmentService {
 		return null;
 	}
 
-	public void executeOperation(EquipmentState state, Equipment equipment) {
+	public void executeOperation(EquipmentOperation operation, Equipment equipment) {
+		 EquipmentState currentState = equipment.getState();
 
-		switch (state) {
-		case ON -> {
-			equipment.setState(EquipmentState.ON);
-			equipment.powerOn();
-		}
-		case OFF -> {
-			equipment.setState(EquipmentState.OFF);
-			equipment.powerOff();
-		}
-	}
+		    switch (operation) {
+
+		        case TURN_ON -> {
+		            if (currentState == EquipmentState.ON) {
+		                System.out.println("The equipment is already ON.");
+		                return;
+		            }
+		            equipment.setState(EquipmentState.ON);
+		            equipment.powerOn();
+		        }
+
+		        case TURN_OFF -> {
+		            if (currentState == EquipmentState.OFF) {
+		                System.out.println("The equipment is already OFF.");
+		                return;
+		            }
+		            equipment.setState(EquipmentState.OFF);
+		            equipment.powerOff();
+		        }
+
+		        case RESTART -> {
+		            if (currentState == EquipmentState.OFF) {
+		                System.out.println("The equipment is OFF. Turn it ON before restarting.");
+		                return;
+		            }
+		            equipment.setState(EquipmentState.OFF);
+			        equipment.powerOff();
+			        equipment.setState(EquipmentState.ON);
+			        equipment.powerOn();
+		        }
+		    }
   }
 
 	public void showEnergyReport(Equipment equipment) {
