@@ -44,6 +44,7 @@ public class Firewall extends Equipment {
 		System.out.println("Firewall is restarting up...Connecting to networks.");
 	}
 	
+	//Calculating energy consumption
 	@Override
 	public Double calculateConsumption(Integer qtdHourConsumption) {
 		return (super.getEnergyConsumption() * super.getQtdHourConsumption()) / 1000;

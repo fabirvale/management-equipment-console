@@ -112,7 +112,6 @@ public class EquipmentService {
 	}
 
 	// validate the IP
-
 	public boolean validarIP(String ip) {
 		String regex = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}" + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
 		return ip.matches(regex);
@@ -127,26 +126,33 @@ public class EquipmentService {
 		return false; // there is no IP in list
 	}
 	
+	//valid Energy
 	public boolean isValidEnergy(Double energy) {
 		return energy != null && energy > 0;
 	}
-
+    
+	//valid ConsumptionHours
 	public boolean isValidConsumptionHours(int hours) {
 		return hours > 0 && hours <= 24;
 	}
  
+	//valid integer value
 	public boolean isValidInteger(Integer value) {
 		return value != null && value > 0;
 	}
 
+	//valid double8l value
 	public boolean isValidDouble(Double value) {
 		return value != null && value > 0;
 	}
 
+	//valid yes or no
 	public boolean isValidBoolean(String input) {
 		return input.equalsIgnoreCase("yes") || input.equalsIgnoreCase("no");
 	}
 
+	
+	//Search IP
 	public Equipment ipSearch(String ip) {
 		for (Equipment e : equipments) {
 			if (e.getIp().equals(ip)) {
@@ -155,7 +161,8 @@ public class EquipmentService {
 		}
 		return null;
 	}
-
+	
+// turn on or turn off or restart the equipment
 	public void executeOperation(EquipmentOperation operation, Equipment equipment) {
 		 EquipmentState currentState = equipment.getState();
 
@@ -191,15 +198,55 @@ public class EquipmentService {
 		        }
 		    }
   }
-
+	
+	
+	//Report Consumption energy per day
 	public void showEnergyReport(Equipment equipment) {
-		System.out.println();
-		System.out.println(equipment.toString() + "\n Consumption/Day: "
-				+ equipment.calculateConsumption(equipment.getQtdHourConsumption()));
-		System.out.println("=======================================================================================");
-		System.out.println();
+			
+		double dailyConsumption = (equipment.getEnergyConsumption() * equipment.getQtdHourConsumption()) / 1000;
+
+	    System.out.println("\n================ ENERGY CONSUMPTION REPORT ================\n");
+
+	    System.out.println("Equipment Information");
+	    System.out.println("-----------------------------------------------------------");
+	    System.out.println("Type           : " + equipment.getType());
+	    System.out.println("Model          : " + equipment.getModel());
+	    System.out.println("IP             : " + equipment.getIp());
+	    System.out.println("Manufacturer   : " + equipment.getManufacturer());
+	    System.out.println("State          : " + equipment.getState());
+
+	    System.out.println("\nEnergy Configuration");
+	    System.out.println("-----------------------------------------------------------");
+	    System.out.println("Power (Watts)  : " + equipment.getEnergyConsumption() + " W");
+	    System.out.println("Usage per Day  : " + equipment.getQtdHourConsumption() + " hours");
+
+	    System.out.println("\nCalculated Consumption");
+	    System.out.println("-----------------------------------------------------------");
+	    System.out.printf("Daily Consumption : %.2f kWh%n", dailyConsumption);
+
+	    System.out.println("\nSpecific Information");
+	    System.out.println("-----------------------------------------------------------");
+
+	    if (equipment instanceof Switch s) {
+	        System.out.println("Port Capacity     : " + s.getPortCapacityGB() + " GB");
+	    } else if (equipment instanceof Router r) {
+	        System.out.println("WiFi Supported    : " + r.getSuportWifi());
+	        System.out.println("Speed             : " + r.getMbps() + " Mbps");
+	    } else if (equipment instanceof Server s) {
+	        System.out.println("OS                : " + s.getOpSystem());
+	        System.out.println("RAM               : " + s.getRamCapacity() + " GB");
+	        System.out.println("Disk              : " + s.getDiskCapacity() + " GB");
+	    } else if (equipment instanceof Firewall f) {
+	        System.out.println("SPI Enabled       : " + f.isStatefullPacketInspection());
+	        System.out.println("Block DoS         : " + f.isBlockDoS());
+	    }
+
+	    System.out.println("\n===========================================================\n");
 	}
 
+
+
+	//Report state
 	public void showStateReport(Equipment equipment) {
 		System.out.println();
 		System.out.println(" Model: " + equipment.getModel() + "\n Manufacturer: " + equipment.getManufacturer()
@@ -208,6 +255,7 @@ public class EquipmentService {
 		System.out.println();
 	}
 
+	//Remove the equipment
 	public boolean removeEquipmentByIP(Integer index) {
 		if (index >= 0 && index < equipments.size()) {
 			equipments.remove((int) index);
@@ -215,7 +263,9 @@ public class EquipmentService {
 		}
 		return false;
 	}
-
+	
+	
+   // load File
 	public void loadFromFile() {
 
 		// making a backup of the original file before uploading
@@ -253,6 +303,7 @@ public class EquipmentService {
 		}
 	}
 
+	//create the equipment from file
 	public void createEquipmentFromLine(String[] vetEquipment, Integer line) {
 		Integer qtdHourConsumption, mbps, ramCapacity, diskCapacity;
 		String model, ip, manufacturer, opSystem;
@@ -468,7 +519,8 @@ public class EquipmentService {
 			equipments.add(eq);
 		}
 	}
-
+    
+	//Save the file .csv
 	public void saveToFile() {
 		try (BufferedWriter bw = new BufferedWriter(new FileWriter("C:\\temp\\out\\equipments.csv", false))) {
 
@@ -502,21 +554,25 @@ public class EquipmentService {
 		}
 	}
 
+	//Filter by equipment type
 	public Map<EquipmentType, Long> generateEqCount() {
 		return equipments.stream().collect(Collectors.groupingBy(Equipment::getType, Collectors.counting()));
 	}
 
+	//calculate average energy consumption by type
 	public Map<EquipmentType, Double> generateAverageConsumption() {
 		return equipments.stream().collect(Collectors.groupingBy(Equipment::getType, // grouping by type
 				Collectors.averagingDouble(Equipment::getEnergyConsumption) // calculate average
 		));
 	}
 
+	//counting the equipment by state
 	public Map<EquipmentState, Long> generateEqState() {
 		return equipments.stream().collect(Collectors.groupingBy(Equipment::getState, // grouping by state
 				Collectors.counting())); // counting the equipment by state
 	}
 
+	//Top 3 equipment that consume the most energy
 	public List<Equipment> getTop3Consumo() {
 		return equipments.stream().sorted(Comparator.comparingDouble(Equipment::getEnergyConsumption).reversed())
 				.limit(3).collect(Collectors.toList());

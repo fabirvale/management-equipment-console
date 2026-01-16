@@ -26,12 +26,6 @@ public class ManagementEquipmentApp {
 			case 2 -> printListEquipments(equipmentService.getEquipments());
 			case 3 ->
 			{
-			    if (equipmentService.getEquipments().isEmpty()) {
-			        System.out.println("No equipment registered yet.");
-			        return;
-			    }
-
-				    
 			    // === Operation ===
 			    while (true) {
 			        System.out.print("Operation (turn on/turn off/restart): ");
@@ -39,36 +33,26 @@ public class ManagementEquipmentApp {
 
 			        try {
 			            op = EquipmentOperation.fromString(operation);
-			            break; // invalid operation
+			            break; //valid operation
 			        } catch (IllegalArgumentException e) {
 			            System.out.println("Invalid operation. Use: turn on, turn off or restart.");
 			        }
 			    }
-
-			    // === IP ===
-			    Equipment equipment = null;
-			    
-			    while (true) {
-			        System.out.print("Inform the IP: ");
-			        String ip = sc.nextLine();
-
-			        if (!equipmentService.validarIP(ip)) {
-			            System.out.println("Invalid IP format! Try again.");
-			            continue;
-			        }
-
-			        equipment = equipmentService.ipSearch(ip);
-
-			        if (equipment == null) {
-			            System.out.println("No equipment found with this IP.");
-			            continue;
-			        }
-
-			        break; //Valid IP and equipment found
-			    }
-
+                
+			    Equipment equipment = validateAndGetEquipment(sc, equipmentService);
+			
 			    // === Execute ===
 			    equipmentService.executeOperation(op, equipment);
+			}
+			case 4 ->
+			{
+			  // === Execute ===       
+			  Equipment equipment = validateAndGetEquipment(sc, equipmentService);	   
+			  if (equipment == null) {
+			        break; // break exits menu loop and returns to main menu
+			    }
+			  equipmentService.showEnergyReport(equipment);
+
 			}
 
 			case 0 -> System.out.println("Application finished.");
@@ -230,6 +214,34 @@ public class ManagementEquipmentApp {
 	        System.out.println("Error registering equipment. Check input values.");
 	    }
 	}
+	
+	private Equipment validateAndGetEquipment(Scanner sc, EquipmentService service) {
+
+	    if (service.getEquipments().isEmpty()) {
+	        System.out.println("No equipment registered yet.");
+	        return null;
+	    }
+
+	    while (true) {
+	        System.out.print("Inform the IP: ");
+	        String ip = sc.nextLine().trim();
+
+	        if (!service.validarIP(ip)) {
+	            System.out.println("Invalid IP format! Try again.");
+	            continue;
+	        }
+
+	        Equipment equipment = service.ipSearch(ip);
+
+	        if (equipment == null) {
+	            System.out.println("No equipment found with this IP. Try again.");
+	            continue;
+	        }
+
+	        return equipment;
+	    }
+	}
+
 
 	
 	public static void printListEquipments(List<Equipment> equipments) {
@@ -267,6 +279,7 @@ public class ManagementEquipmentApp {
 		System.out.println("1 - Register equipment");
 		System.out.println("2 - List equipments");
 		System.out.println("3 - Turn On / Turn Off / Restart Equipment");
+		System.out.println("4 - Calculate Energy Consumption");
 		System.out.println("0 - Exit");
 		System.out.print("Choose an option: ");
 	}
