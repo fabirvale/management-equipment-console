@@ -57,9 +57,7 @@ public class Firewall extends Equipment {
     
 	@Override
 	public String toString() {
-		return super.toString() 
-			   + "\n StatefullPacketInspection: " + statefullPacketInspection 
-			   + "\n BlockDoS: " + blockDoS;
+		return super.toString();
 	}
 	
 

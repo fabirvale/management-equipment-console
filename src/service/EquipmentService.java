@@ -136,7 +136,7 @@ public class EquipmentService {
 		return value != null && value > 0;
 	}
 
-	//valid double8l value
+	//valid double value
 	public boolean isValidDouble(Double value) {
 		return value != null && value > 0;
 	}
@@ -243,11 +243,20 @@ public class EquipmentService {
 
 	//Report state
 	public void showStateReport(Equipment equipment) {
-		System.out.println();
-		System.out.println(" Model: " + equipment.getModel() + "\n Manufacturer: " + equipment.getManufacturer()
-				+ "\n State: " + equipment.getState());
-		System.out.println("=======================================================================================");
-		System.out.println();
+		    System.out.println();
+		    System.out.println("==============================");
+		    System.out.println(" EQUIPMENT STATE REPORT");
+		    System.out.println("==============================");
+
+		    System.out.println(equipment.toString());
+		    
+		    String details = equipment.getDetails();
+		    if (details != null && !details.isBlank()) {
+		        System.out.println(" Details: " + details);
+		    }
+
+		    System.out.println("=======================================================================================");
+		    System.out.println();
 	}
 
 	//Remove the equipment

@@ -81,8 +81,7 @@ public class ManagementEquipmentApp {
 			  if (equipment == null) {
 			        break; // break exits menu loop and returns to main menu
 			    }
-			  System.out.println();
-			  System.out.println(equipment);
+			  showSearchResult(equipment);
 
 			}
 			case 7 ->
@@ -329,6 +328,17 @@ public class ManagementEquipmentApp {
 
 		System.out.println(
 				"--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+	}
+	
+	private void showSearchResult(Equipment equipment) {
+	    System.out.println();
+	    System.out.println("==============================");
+	    System.out.println(" EQUIPMENT FOUND");
+	    System.out.println("==============================");
+	    System.out.println(equipment);
+	    System.out.println(" Details: " + equipment.getDetails());
+	    System.out.println("=======================================================================================");
+	    System.out.println();
 	}
     
 
