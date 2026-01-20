@@ -1,14 +1,5 @@
 package service;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -27,6 +18,10 @@ import model.Switch;
 public class EquipmentService {
 
 	List<Equipment> equipments = new ArrayList<>();
+	
+	public void clear() {
+        equipments.clear();
+    }
 
 	public EquipmentService() {
 
@@ -318,46 +313,6 @@ public class EquipmentService {
 		    );
 		}
     }
-	
-	
-   // load File
-	public void loadFromFile() {
-
-		// making a backup of the original file before uploading
-		Path origem = Paths.get("C:\\temp\\out\\equipments.csv");
-		Path destino = Paths.get("C:\\temp\\out\\equipments_backup.csv");
-		try {
-			if (Files.exists(origem)) {
-				Files.copy(origem, destino, StandardCopyOption.REPLACE_EXISTING);
-			}
-		} catch (IOException e) {
-			System.out.println("Error copying file: " + e.getMessage());
-		}
-
-		try (BufferedReader br = new BufferedReader(new FileReader(origem.toString()))) {
-
-			System.out.println("Loading the equipment list file...");
-			String[] vetEquipment;
-			int i = 0;
-
-			String line = br.readLine();
-
-			while (line != null) {
-				i++;
-				vetEquipment = line.split(";");
-				createEquipmentFromLine(vetEquipment, i);
-				line = br.readLine();
-
-			}
-
-			System.out.println(i + " lines were loaded.");
-			System.out.println();
-
-		} catch (IOException e) {
-			System.out.println("Error: " + e.getMessage());
-		}
-	}
-
 	//create the equipment from file
 	public void createEquipmentFromLine(String[] vetEquipment, Integer line) {
 		Integer qtdHourConsumption, mbps, ramCapacity, diskCapacity;
@@ -574,43 +529,7 @@ public class EquipmentService {
 			equipments.add(eq);
 		}
 	}
-    
-	//Save the file .csv
-	public void saveToFile() {
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter("C:\\temp\\out\\equipments.csv", false))) {
-
-			for (Equipment e : equipments) {
-				String line = e.getType().name() + ";" + e.getModel() + ";" + e.getIp() + ";" + e.getManufacturer()
-						+ ";" + e.getState() + ";" + e.getEnergyConsumption() + ";" + e.getQtdHourConsumption();
-
-				// specific fields by type
-				if (e instanceof Router) {
-					Router r = (Router) e;
-					line += ";" + r.getSuportWifi() + ";" + r.getMbps();
-				} else if (e instanceof Switch) {
-					Switch s = (Switch) e;
-					line += ";" + s.getPortCapacityGB();
-				} else if (e instanceof Server) {
-					Server s = (Server) e;
-					line += ";" + s.getOpSystem() + ";" + s.getRamCapacity() + ";" + s.getDiskCapacity();
-				} else if (e instanceof Firewall) {
-					Firewall f = (Firewall) e;
-					line += ";" + f.isStatefullPacketInspection() + ";" + f.isBlockDoS();
-				}
-
-				bw.write(line);
-				bw.newLine();
-			}
-
-			System.out.println("Equipments successfully saved to file.");
-
-		} catch (IOException e) {
-			System.out.println("Error: " + e.getMessage());
-		}
-	}
-  	
-
-	//Filter by equipment type
+ //Filter by equipment type
 	public Map<EquipmentType, Long> generateEqCount() {
 		return equipments.stream().collect(Collectors.groupingBy(Equipment::getType, Collectors.counting()));
 	}

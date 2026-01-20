@@ -5,12 +5,20 @@ import java.util.Scanner;
 
 import model.Equipment;
 import model.EquipmentOperation;
+import service.EquipmentFileService;
 import service.EquipmentService;
 
 public class ManagementEquipmentApp {
 
 	private final Scanner sc = new Scanner(System.in);
 	private final EquipmentService equipmentService = new EquipmentService();
+	
+	EquipmentFileService fileService = new EquipmentFileService(equipmentService);
+				
+	public ManagementEquipmentApp() {
+		 equipmentService.clear();
+		 fileService.loadFromFile(); // loading equipments.csv
+	}
 
 	public void start() {
 		int option;
@@ -95,7 +103,12 @@ public class ManagementEquipmentApp {
 
 			}
 			case 8 -> equipmentService.generateSummary(equipmentService);
-			case 0 -> System.out.println("Application finished.");
+			case 0 ->
+			{
+				System.out.println("Saving data before exit...");
+				fileService.saveToFile();
+				System.out.println("Application finished.");
+			}
 			default -> System.out.println("Invalid option.");
 		  }
 
