@@ -54,7 +54,47 @@ public class ManagementEquipmentApp {
 			  equipmentService.showEnergyReport(equipment);
 
 			}
+			case 5 ->
+			{
+			  // === Execute ===       
+			  Equipment equipment = validateAndGetEquipment(sc, equipmentService);	   
+			  if (equipment == null) {
+			        break; // break exits menu loop and returns to main menu
+			    }
+			  equipmentService.showStateReport(equipment);
 
+			}
+			case 6 ->
+			{
+			  // === Execute ===       
+			  Equipment equipment = validateAndGetEquipment(sc, equipmentService);	   
+			  if (equipment == null) {
+			        break; // break exits menu loop and returns to main menu
+			    }
+			  System.out.println();
+			  System.out.println(equipment);
+
+			}
+			case 7 ->
+			{
+			  // === Execute ===       
+			  Equipment equipment = validateAndGetEquipment(sc, equipmentService);	   
+			  if (equipment == null) {
+			        break; // break exits menu loop and returns to main menu
+			    }
+			  int index = equipmentService.getEquipments().indexOf(equipment);
+
+			  if (equipmentService.removeEquipmentByIP(index)) {
+					System.out.println("Equipment with IP " + equipment.getIp() + " removed successfully.");
+					break;
+				} 
+			  else {
+					System.out.println("Error removing equipment with IP " + equipment.getIp());
+					break;
+				}
+
+			}
+			case 8 -> equipmentService.generateSummary(equipmentService);
 			case 0 -> System.out.println("Application finished.");
 			default -> System.out.println("Invalid option.");
 		  }
@@ -280,6 +320,10 @@ public class ManagementEquipmentApp {
 		System.out.println("2 - List equipments");
 		System.out.println("3 - Turn On / Turn Off / Restart Equipment");
 		System.out.println("4 - Calculate Energy Consumption");
+		System.out.println("5 - State Report");
+		System.out.println("6 - Search Equipment by IP");
+		System.out.println("7 - Remove Equipment by IP");
+		System.out.println("8 - Generic Summary Report");
 		System.out.println("0 - Exit");
 		System.out.print("Choose an option: ");
 	}

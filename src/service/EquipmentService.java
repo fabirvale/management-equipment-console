@@ -265,6 +265,61 @@ public class EquipmentService {
 	}
 	
 	
+  //Report	generate summary
+ public void generateSummary(EquipmentService eqService) {
+		
+		Map<EquipmentType, Long> eqCount = generateEqCount();
+		
+        System.out.println();
+		System.out.println("=== Number of equipment by type ===");
+				
+		for (Map.Entry<EquipmentType, Long> entry : eqCount.entrySet()) {
+		    String typeFormatter =
+		        entry.getKey().name().substring(0, 1).toUpperCase()
+		      + entry.getKey().name().substring(1).toLowerCase();
+
+		    System.out.println(typeFormatter + ": " + entry.getValue());
+		}
+		
+		Map<EquipmentType, Double> eqAverage = generateAverageConsumption();
+		
+		System.out.println();
+		System.out.println("=== Average daily energy consumption by type ===");
+		
+		for (Map.Entry<EquipmentType, Double> average : eqAverage.entrySet()) {
+		    String typeFormatter =
+		        average.getKey().name().substring(0, 1).toUpperCase()
+		      + average.getKey().name().substring(1).toLowerCase();
+
+		    System.out.printf("%s: %.2f kWh%n", typeFormatter, average.getValue());
+		 }   
+		
+        Map<EquipmentState, Long> eqState = generateEqState();
+		
+        System.out.println();
+		System.out.println("=== Number of devices per state (OFF/ON) ===");
+		for (Map.Entry<EquipmentState, Long> entry : eqState.entrySet()) {
+			 String typeFormatter = 
+					 entry.getKey().name().substring(0, 1).toUpperCase()
+				      + entry.getKey().name().substring(1).toLowerCase();
+			 System.out.println(typeFormatter + ": " + entry.getValue());
+		}
+		System.out.println();
+		System.out.println("=== Top 3 equipamentos com maior consumo ===");
+
+		List<Equipment> top3 = eqService.getTop3Consumo();
+		for (int i = 0; i < top3.size(); i++) {
+		    Equipment eq = top3.get(i);
+		    System.out.printf("%d. %s (%s) - %.2f kWh%n",
+		        i + 1,
+		        eq.getModel(),   
+		        eq.getType(),
+		        eq.getEnergyConsumption()
+		    );
+		}
+    }
+	
+	
    // load File
 	public void loadFromFile() {
 
@@ -553,6 +608,7 @@ public class EquipmentService {
 			System.out.println("Error: " + e.getMessage());
 		}
 	}
+  	
 
 	//Filter by equipment type
 	public Map<EquipmentType, Long> generateEqCount() {
@@ -565,6 +621,7 @@ public class EquipmentService {
 				Collectors.averagingDouble(Equipment::getEnergyConsumption) // calculate average
 		));
 	}
+
 
 	//counting the equipment by state
 	public Map<EquipmentState, Long> generateEqState() {
