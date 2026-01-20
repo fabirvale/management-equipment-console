@@ -7,11 +7,13 @@ import model.Equipment;
 import model.EquipmentOperation;
 import service.EquipmentFileService;
 import service.EquipmentService;
+import service.LogService;
 
 public class ManagementEquipmentApp {
 
 	private final Scanner sc = new Scanner(System.in);
 	private final EquipmentService equipmentService = new EquipmentService();
+	private LogService logService = new LogService();
 	
 	EquipmentFileService fileService = new EquipmentFileService(equipmentService);
 				
@@ -103,6 +105,12 @@ public class ManagementEquipmentApp {
 
 			}
 			case 8 -> equipmentService.generateSummary(equipmentService);
+			case 9 ->
+			{
+				if (!logService.printLog()) {
+			        System.out.println("No log file found.");
+			    }
+			}
 			case 0 ->
 			{
 				System.out.println("Saving data before exit...");
@@ -337,6 +345,7 @@ public class ManagementEquipmentApp {
 		System.out.println("6 - Search Equipment by IP");
 		System.out.println("7 - Remove Equipment by IP");
 		System.out.println("8 - Generic Summary Report");
+		System.out.println("9 - List error log ");
 		System.out.println("0 - Exit");
 		System.out.print("Choose an option: ");
 	}
