@@ -37,21 +37,11 @@ public class EquipmentService {
     
 	
 	//Register Equipment and add in the list
-	public Boolean registerEquipment(String type, String model, String ip, String manufacturer, String state,
+	public Boolean registerEquipment(EquipmentType type, String model, String ip, String manufacturer, EquipmentState state,
 	        Double energyConsumption, Integer qtdHourConsumption, Boolean supportWifi, Integer mbps,
 	        Double portCapacityGB, String opSystem, Integer ramCapacity, Integer diskCapacity,
 	        Boolean statefullPacketInspection, Boolean blockDoS) {
-
-	    EquipmentType typeInput;
-	    EquipmentState stateInput;
-	  
-	    try {
-	        typeInput = EquipmentType.fromString(type);
-	        stateInput = EquipmentState.fromString(state);
-	    } catch (IllegalArgumentException e) {
-	         return false;
-	    }
-	    
+	    	    
 	    // Safety validations (non-interactive)
 	    if (!validarIP(ip) || isDuplicateIp(ip)) {
 	        return false;
@@ -62,34 +52,34 @@ public class EquipmentService {
 	    }
   
 	    // specific fields for validations
-	    if (typeInput == EquipmentType.ROUTER && (supportWifi == null || !isValidInteger(mbps))) {
+	    if (type == EquipmentType.ROUTER && (supportWifi == null || !isValidInteger(mbps))) {
 	         return false;
-	    } else if (typeInput == EquipmentType.SWITCH && !isValidDouble(portCapacityGB)) {
+	    } else if (type == EquipmentType.SWITCH && !isValidDouble(portCapacityGB)) {
 	         return false;
-	    } else if (typeInput == EquipmentType.SERVER
+	    } else if (type == EquipmentType.SERVER
 	            && (!isRequiredFieldValid(opSystem) || !isValidInteger(ramCapacity) || !isValidInteger(diskCapacity))) {
 	         return false;
-	    } else if (typeInput == EquipmentType.FIREWALL && (statefullPacketInspection == null || blockDoS == null)) {
+	    } else if (type == EquipmentType.FIREWALL && (statefullPacketInspection == null || blockDoS == null)) {
 	         return false;
 	    }
 
 	    // Create the equipment
 	    Equipment e = null;
-	    switch (typeInput) {
+	    switch (type) {
 	        case ROUTER:
-	            e = new Router(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
+	            e = new Router(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption,
 	                    supportWifi, mbps);
 	            break;
 	        case SWITCH:
-	            e = new Switch(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
+	            e = new Switch(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption,
 	                    portCapacityGB);
 	            break;
 	        case SERVER:
-	            e = new Server(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
+	            e = new Server(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption,
 	                    opSystem, ramCapacity, diskCapacity);
 	            break;
 	        case FIREWALL:
-	            e = new Firewall(typeInput, model, ip, manufacturer, stateInput, energyConsumption, qtdHourConsumption,
+	            e = new Firewall(type, model, ip, manufacturer, state, energyConsumption, qtdHourConsumption,
 	                    statefullPacketInspection, blockDoS);
 	            break;
 	    }

@@ -5,6 +5,8 @@ import java.util.Scanner;
 
 import model.Equipment;
 import model.EquipmentOperation;
+import model.EquipmentState;
+import model.EquipmentType;
 import service.EquipmentFileService;
 import service.EquipmentService;
 import service.LogService;
@@ -128,12 +130,22 @@ public class ManagementEquipmentApp {
 	    System.out.println("\n=== Register Equipment ===");
 
 	    // === Type ===
-	    String type;
+	    EquipmentType type;
 	    while (true) {
 	        System.out.print("Type (Router/Switch/Server/Firewall): ");
-	        type = sc.nextLine();
-	        if (!type.trim().isEmpty()) break;
-	        System.out.println("Type cannot be empty.");
+	        String input = sc.nextLine().trim();
+
+	        if (input.isEmpty()) {
+	            System.out.println("Type cannot be empty! Try again.");
+	            continue;
+	        }
+
+	        try {
+	            type = EquipmentType.fromString(input);
+	            break; // valid, exit the loop
+	        } catch (IllegalArgumentException e) {
+	            System.out.println("Invalid type! Please enter Router, Switch, Server, or Firewall.");
+	        }
 	    }
 
 	    // === Model ===
@@ -182,44 +194,72 @@ public class ManagementEquipmentApp {
 	    }
 
 	    // === State ===
-	    String state;
+	    EquipmentState state;
 	    while (true) {
 	        System.out.print("State (on/off): ");
-	        state = sc.nextLine();
-	        if (!state.trim().isEmpty()) break;
-	        System.out.println("State cannot be empty.");
+	        String input = sc.nextLine().trim();
+	        if (input.isEmpty()) {
+	            System.out.println("State cannot be empty.");
+	            continue;
+	        }
+
+	        try {
+	            state = EquipmentState.fromString(input);
+	            break;
+	        } catch (IllegalArgumentException e) {
+	            System.out.println("Invalid state! Please enter 'on' or 'off'.");
+	        }
 	    }
 
 	 // === Validate Energy Consumption ===
 	    Double energyConsumption = null;
 	    while (true) {
+	        System.out.print("Energy Consumption (W): ");
+	        String input = sc.nextLine().trim(); 
+
+	        if (input.isEmpty()) {
+	            System.out.println("Energy Consumption cannot be empty! Try again.");
+	            continue;
+	        }
+
 	        try {
-	            System.out.print("Energy Consumption (W): ");
-	            energyConsumption = sc.nextDouble();
-	            sc.nextLine(); // clear buffer
-	            if (equipmentService.isValidEnergy(energyConsumption))
-	                break;
-	            System.out.println("Energy consumption must be positive!");
+	            energyConsumption = Double.parseDouble(input);
+
+	            if (energyConsumption <= 0) {
+	                System.out.println("Energy consumption must be positive!");
+	                continue;
+	            }
+
+	            break; // valid
 	        } catch (NumberFormatException e) {
-	            System.out.println("Invalid number! Try again.");
-	            sc.nextLine(); // clear buffer after error
+	            System.out.println("Invalid number! Enter a numeric value (e.g. 450).");
 	        }
 	    }
+
+
 
 	    // === Validate Consumption/Day ===
 	    int qtdHourConsumption = 0;
 	    while (true) {
-	        try {
 	            System.out.print("Consumption/Day (hours 1-24): ");
-	            qtdHourConsumption = sc.nextInt();
-	            sc.nextLine(); // clear buffer
-	            if (equipmentService.isValidConsumptionHours(qtdHourConsumption))
-	                break;
-	            System.out.println("Consumption/Day must be 1-24!");
-	        } catch (NumberFormatException e) {
-	            System.out.println("Invalid number! Try again.");
-	            sc.nextLine(); // clear buffer after error
-	        }
+	            String input = sc.nextLine().trim(); 
+	            
+	            if (input.isEmpty()) {
+		            System.out.println("Consumption/Day cannot be empty! Try again.");
+		            continue;
+		        }
+
+		        try {
+		        	qtdHourConsumption = Integer.parseInt(input);
+		        	if (qtdHourConsumption < 1 || qtdHourConsumption > 24) {
+		                System.out.println("Invalid value! Enter a number between 1 and 24.");
+		                continue;
+		            }
+		            break; // valid value
+		        } catch (NumberFormatException e) {
+		        	 System.out.println("Invalid number! Try again.");
+		        }
+		     
 	    }
 
 	    // === Specific fields by type ===
@@ -233,31 +273,141 @@ public class ManagementEquipmentApp {
 	    Boolean blockDoS = null;
 
 	    //Depending on the type, we request the specific fields
-	    if (type.equalsIgnoreCase("Router")) {
-	        System.out.print("Supports WiFi (yes/no): ");
-	        String wifi = sc.nextLine();
-	        supportWifi = wifi.equalsIgnoreCase("yes");
+	    if (type == EquipmentType.ROUTER) {
+	        
+	        String wifiInput;
+	        while (true) {
+	            System.out.print("Supports WiFi (yes/no): ");
+	            wifiInput = sc.nextLine().trim().toLowerCase();
+	            if (wifiInput.equals("yes") || wifiInput.equals("no")) {
+	                break;
+	            }
+	            System.out.println("Invalid input! Please enter 'yes' or 'no'.");
+	        }
+	        supportWifi = wifiInput.equals("yes"); // true if 'yes', false if 'no'
+	
+	       while (true) {
+	            System.out.print("Mbps: ");
+	            String input = sc.nextLine().trim();
 
-	        System.out.print("Mbps: ");
-	        mbps = Integer.parseInt(sc.nextLine());
-	    } else if (type.equalsIgnoreCase("Switch")) {
-	        System.out.print("Port Capacity (GB): ");
-	        portCapacityGB = Double.parseDouble(sc.nextLine());
-	    } else if (type.equalsIgnoreCase("Server")) {
-	        System.out.print("Operating System: ");
-	        opSystem = sc.nextLine();
+	            if (input.isEmpty()) {
+	                System.out.println("Mbps cannot be empty! Try again.");
+	                continue;
+	            }
 
-	        System.out.print("RAM Capacity (GB): ");
-	        ramCapacity = Integer.parseInt(sc.nextLine());
+	            try {
+	                mbps = Integer.parseInt(input);
+	                if (mbps <= 0) {
+	                    System.out.println("Mbps must be positive!");
+	                    continue;
+	                }
+	                break; // valid value
+	            } catch (NumberFormatException e) {
+	                System.out.println("Invalid number! Enter a positive integer.");
+	            }
+	        }
 
-	        System.out.print("Disk Capacity (GB): ");
-	        diskCapacity = Integer.parseInt(sc.nextLine());
-	    } else if (type.equalsIgnoreCase("Firewall")) {
-	        System.out.print("Statefull Packet Inspection (yes/no): ");
-	        statefullPacketInspection = sc.nextLine().equalsIgnoreCase("yes");
+	        
+	    } else if (type == EquipmentType.SWITCH) {
+	       	        
+	        while (true) {
+	        	System.out.print("Port Capacity (GB): ");
+	            String input = sc.nextLine().trim();
 
-	        System.out.print("Block DoS attacks (yes/no): ");
-	        blockDoS = sc.nextLine().equalsIgnoreCase("yes");
+	            if (input.isEmpty()) {
+	                System.out.println("Port Capacity cannot be empty! Try again.");
+	                continue;
+	            }
+
+	            try {
+	            	portCapacityGB = Double.parseDouble(input);
+	                if (portCapacityGB <= 0) {
+	                    System.out.println("Port Capacity must be positive!");
+	                    continue;
+	                }
+	                break; // valid value
+	            } catch (NumberFormatException e) {
+	                System.out.println("Invalid number! Try again.");
+	            }
+	        }
+        
+	        
+	    } else if (type == EquipmentType.SERVER) {
+	       
+		    while (true) {
+		    	 System.out.print("Operating System: ");
+			     opSystem = sc.nextLine();
+			       	       
+		         if (!opSystem.trim().isEmpty()) break;
+		         System.out.println("Operation System cannot be empty.");
+		    }
+
+	        while (true) {
+	            System.out.print("RAM Capacity (GB): ");
+	            String input = sc.nextLine().trim();
+
+	            if (input.isEmpty()) {
+	                System.out.println("RAM Capacity cannot be empty! Try again.");
+	                continue;
+	            }
+
+	            try {
+	                ramCapacity = Integer.parseInt(input);
+	                if (ramCapacity <= 0) {
+	                    System.out.println("RAM Capacity must be positive!");
+	                    continue;
+	                }
+	                break; // valor válido
+	            } catch (NumberFormatException e) {
+	                System.out.println("Invalid number! Enter a positive integer.");
+	            }
+	        }
+
+
+	        while (true) {
+	            System.out.print("Disk Capacity (GB): ");
+	            String input = sc.nextLine().trim();
+
+	            if (input.isEmpty()) {
+	                System.out.println("Disk Capacity cannot be empty! Try again.");
+	                continue;
+	            }
+
+	            try {
+	                diskCapacity = Integer.parseInt(input);
+	                if (diskCapacity <= 0) {
+	                    System.out.println("Disk Capacity must be positive!");
+	                    continue;
+	                }
+	                break; // valor válido
+	            } catch (NumberFormatException e) {
+	                System.out.println("Invalid number! Enter a positive integer.");
+	            }
+	        }
+
+	    } else if (type == EquipmentType.FIREWALL) {
+	      
+	        String sfpiInput;
+	        while (true) {
+	        	System.out.print("Statefull Packet Inspection (yes/no): ");
+	            sfpiInput = sc.nextLine().trim().toLowerCase();
+	            if (sfpiInput.equals("yes") || sfpiInput.equals("no")) {
+	                break;
+	            }
+	            System.out.println("Invalid input! Please enter 'yes' or 'no'.");
+	        }
+	        statefullPacketInspection = sfpiInput.equals("yes"); // true if 'yes', false if 'no'
+		        
+	        String blockDoSInput;
+	        while (true) {
+	            System.out.print("Block DoS (yes/no): ");
+	            blockDoSInput = sc.nextLine().trim().toLowerCase();
+	            if (blockDoSInput.equals("yes") || blockDoSInput.equals("no")) {
+	                break;
+	            }
+	            System.out.println("Invalid input! Please enter 'yes' or 'no'.");
+	        }
+	        blockDoS = blockDoSInput.equals("yes"); // true if 'yes', false if 'no'
 	    }
 
 	    // === Registrar equipamento ===
